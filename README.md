@@ -10,6 +10,7 @@
 [![Commitizen friendly](https://img.shields.io/badge/commitizen-friendly-brightgreen.svg)](http://commitizen.github.io/cz-cli/)
 [![Build Status](https://travis-ci.org/Nargonath/cra-build-watch.svg?branch=master)](https://travis-ci.org/Nargonath/twitter-auth-await)
 [![npm version](https://badge.fury.io/js/cra-build-watch.svg)](https://badge.fury.io/js/cra-build-watch)
+![dependabot](https://badgen.net/dependabot/dependabot/dependabot-core/?icon=dependabot)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
 # Disclaimer
@@ -22,19 +23,23 @@ This script is inspired by other work related such as: https://gist.github.com/j
 
 ## Ejection
 
-This tool handles ejected projects but it assumes you did not modify your `webpack.config.dev.js` file, `paths.js` and `env.js` utils. If you did I cannot guarantee that this tool will work.
+You **do not** need to eject your project for you to use `cra-build-watch`.
+
+This tool handles ejected projects but it assumes you did not modify your `webpack.config.js` file, `paths.js` and `env.js` utils. If you did I cannot guarantee that this tool will work.
 
 # Why do I need this?
 
 As of now (20/04/2018), `create-react-app` (more precisely `react-scripts`) does not allow development builds to be written to the disk because it uses `webpackDevServer` to serve your build files and folders ([for good reasons](https://github.com/facebook/create-react-app/issues/1070#issuecomment-261812303)). The problem is that in some cases you need to have these files written to the disk i.e:
 
-* Developing browser extensions using React.
-* Incorporating your React application into an existing application.
-* Serving your React app with a dedicated backend.
+- Developing browser extensions using React.
+- Incorporating your React application into an existing application.
+- Serving your React app with a dedicated backend.
 
 # Prerequisites
 
-Supports `react-scripts >= 1.0.x`, hence it supports the newest version `2.x.x`.
+Supports `react-scripts >= 1.0.x`, hence it supports the newest version `3.x.x`.
+
+Supports `node >= 10`.
 
 # Installation
 
@@ -80,9 +85,14 @@ By default the script will generate everything into `build/` at your project roo
 
 If those defaults do not work for you, the script accepts some arguments:
 
-* `-b|--build-path`: expects either an absolute or relative path. If a relative path is given it will be prefixed by your project root path.
-  * default: `yourProjectRoot/build`.
-* `--react-scripts-version`: expects the `react-scripts` version you are using in your project i.e `2.0.3`. If not given it will be implied from your package.json and if it cannot be implied the version `2.0.4` will be the default. Consider setting it if you ejected.
-* `-p|--public-path`: expects a relative URL where `/` is the root. If you serve your files using an external webserver this argument is to match with your web server configuration. More information can be found in [webpack configuration guide](https://webpack.js.org/configuration/output/#output-publicpath).
-  * default: "".
-* `-v|--verbose`: display webpack build output.
+- `-b|--build-path`: expects either an absolute or relative path. If a relative path is given it will be prefixed by your project root path.
+  - default: `yourProjectRoot/build`.
+- `--disable-chunks`: disable code-splitting / chunks so that only a single bundle.js file is generated. It only works with `react-scripts` >= `2.0.0`.
+- `--react-scripts-version`: expects the `react-scripts` version you are using in your project i.e `2.0.3`. If not given it will be implied from your `node_modules` and if it cannot be implied the version `2.1.2` will be the default. Consider setting it if you **ejected** and are not using the latest `react-scripts` version.
+- `-p|--public-path`: expects a relative URL where `/` is the root. If you serve your files using an external webserver this argument is to match with your web server configuration. More information can be found in [webpack configuration guide](https://webpack.js.org/configuration/output/#output-publicpath).
+  - default: "".
+- `-v|--verbose`: display webpack build output.
+
+# Contributions
+
+All contributions are welcomed. Please base your PR on the `develop` branch rather than `master`.

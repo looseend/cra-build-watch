@@ -6,26 +6,26 @@ const importCwd = require('import-cwd');
 const fs = require('fs-extra');
 const path = require('path');
 const ora = require('ora');
+const assert = require('assert');
 
 const {
-  flags: { buildPath, publicPath, reactScriptsVersion, verbose },
+  flags: { buildPath, publicPath, reactScriptsVersion, verbose, disableChunks },
 } = require('../utils/cliHandler');
 const { getReactScriptsVersion, isEjected } = require('../utils');
 
-const { major, minor, patch } = getReactScriptsVersion(reactScriptsVersion);
+const { major, concatenatedVersion } = getReactScriptsVersion(reactScriptsVersion);
 
 const paths = isEjected ? importCwd('./config/paths') : importCwd('react-scripts/config/paths');
 const webpack = importCwd('webpack');
 
-const config = (major >= 2 && minor >= 1 && patch >= 2) ?
-      (isEjected
-       ? importCwd('./config/webpack.config')
-       : importCwd('react-scripts/config/webpack.config'))('development')
-      :
-      isEjected
-      ? importCwd('./config/webpack.config.dev')
-      : importCwd('react-scripts/config/webpack.config.dev');
-
+const config =
+  concatenatedVersion >= 212
+    ? (isEjected
+        ? importCwd('./config/webpack.config')
+        : importCwd('react-scripts/config/webpack.config'))('development')
+    : isEjected
+    ? importCwd('./config/webpack.config.dev')
+    : importCwd('react-scripts/config/webpack.config.dev');
 
 const HtmlWebpackPlugin = importCwd('html-webpack-plugin');
 const InterpolateHtmlPlugin = importCwd('react-dev-utils/InterpolateHtmlPlugin');
@@ -60,9 +60,26 @@ config.output.publicPath = publicPath || '';
 config.output.filename = `js/bundle.js`;
 config.output.chunkFilename = `js/[name].chunk.js`;
 
+if (disableChunks) {
+  assert(major >= 2, 'Split chunks optimization is only available in react-scripts >= 2.0.0');
+  // disable code-splitting/chunks
+  config.optimization.runtimeChunk = false;
+
+  config.optimization.splitChunks = {
+    cacheGroups: {
+      default: false,
+    },
+  };
+}
+
 // update media path destination
 if (major >= 2) {
-  const oneOfIndex = minor >= 1 || patch >= 4 ? 2 : 3;
+  // 2.0.0 => 2
+  // 2.0.1 => 3
+  // 2.0.2 => 3
+  // 2.0.3 => 3
+  // 2.0.4 to 3.0.0 => 2
+  const oneOfIndex = concatenatedVersion === 200 || concatenatedVersion >= 204 ? 2 : 3;
   config.module.rules[oneOfIndex].oneOf[0].options.name = `media/[name].[hash:8].[ext]`;
   config.module.rules[oneOfIndex].oneOf[7].options.name = `media/[name].[hash:8].[ext]`;
 } else {
@@ -91,21 +108,18 @@ spinner.start('Clear destination folder');
 
 let inProgress = false;
 
-fs
-  .emptyDir(paths.appBuild)
+fs.emptyDir(paths.appBuild)
   .then(() => {
     spinner.succeed();
 
     return new Promise((resolve, reject) => {
       const webpackCompiler = webpack(config);
-      webpackCompiler.apply(
-        new webpack.ProgressPlugin(() => {
-          if (!inProgress) {
-            spinner.start('Start webpack watch');
-            inProgress = true;
-          }
-        })
-      );
+      new webpack.ProgressPlugin(() => {
+        if (!inProgress) {
+          spinner.start('Start webpack watch');
+          inProgress = true;
+        }
+      }).apply(webpackCompiler);
 
       webpackCompiler.watch({}, (err, stats) => {
         if (err) {
